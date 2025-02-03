@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  llama-cpp-server:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    deploy:
+      replicas: 2  # Количество реплик для скейлинга
+    volumes:
+      - ./models:/models  # Монтируем локальную директорию с моделью
+    networks:
+      - llama-network
+    restart: always
+    command: 
+        -m /models/Cotype-Nano-8bit.gguf --port 8000 --host 0.0.0.0 -n 2048
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Монтируем конфигурационный файл Nginx
+    ports:
+      - "8099:80"
+    depends_on:
+      - llama-cpp-server
+    networks:
+      - llama-network
+
+networks:
+  llama-network:
+    driver: bridge
